@@ -30,6 +30,9 @@
             <label class="file-upload-btn" for="{{ profile_form.photo.id_for_label }}">Choose image</label>
             <span class="file-upload-name" id="profilePhotoName">No image selected</span>
           </div>
+          {% for error in profile_form.photo.errors %}
+            <div class="caps-hint reset-error">{{ error }}</div>
+          {% endfor %}
           {% if profile.photo %}
             <label class="remove-photo-option">
               <input type="checkbox" name="remove_photo">

@@ -8,6 +8,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth import authenticate,login,logout, update_session_auth_hash
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib import messages
 from django.urls import reverse
@@ -390,12 +391,24 @@ def update_profile(request):
           form = UserForm(request.POST, instance=user)
           profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
           if form.is_valid() and profile_form.is_valid():
-            form.save()
-            if request.POST.get('remove_photo') == 'on' and profile.photo:
-                profile.photo.delete(save=False)
-                profile.photo = None
-            profile_form.save()
-            return redirect("user-profile", pk=user.id)
+            try:
+                form.save()
+                if request.POST.get('remove_photo') == 'on' and profile.photo:
+                    profile.photo.delete(save=False)
+                    profile.photo = None
+                profile_form.save()
+                return redirect("user-profile", pk=user.id)
+            except Exception as exc:
+                if request.FILES.get('photo'):
+                    profile_form.add_error(
+                        'photo',
+                        ValidationError(
+                            "We could not upload this profile photo right now. Please check Cloudinary settings or try a smaller image."
+                        ),
+                    )
+                else:
+                    messages.error(request, "We could not update your profile right now. Please try again.")
+                print(f"Profile update failed for user {user.id}: {exc}")
     context = {"form": form, "profile_form": profile_form, "profile": profile}
     return render(request,'base/update_profile.html', context)
 
