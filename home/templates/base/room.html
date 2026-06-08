@@ -1,0 +1,167 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<div class="room-container">
+  <section class="room-content">
+    <div class="page-header compact">
+      {% if room.cover %}
+        <div class="room-detail-cover">
+          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
+        </div>
+      {% endif %}
+      <div>
+        {% if room.topic %}
+          <p class="section-eyebrow">{{ room.topic.name }}</p>
+        {% endif %}
+        <h1>{{ room.name }}</h1>
+        <div class="room-status-row">
+          <span class="room-privacy {% if room.is_private %}private{% else %}public{% endif %}">
+            {% if room.is_private %}Private{% else %}Public{% endif %}
+          </span>
+          <span>{{ participants.count }} member{% if participants.count != 1 %}s{% endif %}</span>
+        </div>
+        {% if room.description %}
+          <p>{{ room.description }}</p>
+        {% else %}
+          <p>No description has been added for this room yet.</p>
+        {% endif %}
+      </div>
+      {% if request.user.is_authenticated %}
+        <div class="room-actions inline room-hero-actions">
+          {% if request.user == room.host %}
+            {% if room.is_private %}
+              <a href="{% url 'room-invite' room.invite_code %}">Invite link</a>
+            {% endif %}
+            <a href="{% url 'update-room' room.id %}">Edit</a>
+            <a href="{% url 'delete-room' room.id %}">Delete</a>
+          {% elif is_participant %}
+            <form action="{% url 'leave-room' room.id %}" method="post" class="inline-action-form">
+              {% csrf_token %}
+              <button type="submit">Leave room</button>
+            </form>
+          {% elif not room.is_private %}
+            <form action="{% url 'join-room' room.id %}" method="post" class="inline-action-form">
+              {% csrf_token %}
+              <button type="submit">Join room</button>
+            </form>
+          {% endif %}
+        </div>
+      {% elif not room.is_private %}
+        <div class="room-actions inline room-hero-actions">
+          <a href="{% url 'login_user' %}">Log in to join</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="comment-wrapper">
+      <div class="section-row">
+        <h3>Conversation</h3>
+        <span>{{ room_messages.count }} message{% if room_messages.count != 1 %}s{% endif %}</span>
+      </div>
+
+      {% if room_messages %}
+        <div class="message-list">
+          {% for message in room_messages %}
+            <article class="message">
+              <div class="message-top">
+                <small>
+                  @{{ message.user.username }} - {{ message.created_at|timesince }} ago
+                  {% if message.edited_at %}<span>edited</span>{% endif %}
+                </small>
+                <div class="message-actions">
+                  {% if request.user.is_authenticated %}
+                    <form action="{% url 'react-message' message.id %}" method="post" class="inline-action-form">
+                      {% csrf_token %}
+                      <button type="submit">
+                      {% if request.user in message.reactions.all %}Unlike{% else %}Like{% endif %}
+                      {% if message.reactions.count %}({{ message.reactions.count }}){% endif %}
+                      </button>
+                    </form>
+                    <a href="#messageForm" class="reply-link" data-message-id="{{ message.id }}" data-message-author="@{{ message.user.username }}">Reply</a>
+                  {% endif %}
+                  {% if request.user == message.user %}
+                    <a href="{% url 'edit-message' message.id %}">Edit</a>
+                    <a href="{% url 'delete-message' message.id %}">Delete</a>
+                  {% endif %}
+                </div>
+              </div>
+              {% if message.parent %}
+                <div class="reply-preview">
+                  Replying to @{{ message.parent.user.username }}: {{ message.parent.body|truncatechars:80 }}
+                </div>
+              {% endif %}
+              <p>{{ message.body }}</p>
+              {% if message.attachment %}
+                <a href="{{ message.attachment.url }}" class="message-attachment" target="_blank" rel="noopener">
+                  View attachment
+                </a>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state empty-card">
+          <h3>No messages yet</h3>
+          <p>Start the conversation with a question, resource, or quick update.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+      <div class="comment-form">
+        <form action="" method="post" enctype="multipart/form-data" id="messageForm">
+          {% csrf_token %}
+          <input type="hidden" name="parent" id="replyParent">
+          <div class="replying-to" id="replyingTo" hidden>
+            <span></span>
+            <button type="button" id="cancelReply">Cancel</button>
+          </div>
+          {{ message_form.body }}
+          <label class="message-file-btn" for="{{ message_form.attachment.id_for_label }}">Attach</label>
+          {{ message_form.attachment }}
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    {% else %}
+      <div class="login-prompt">
+        <p>Log in to join this room.</p>
+        <a href="{% url 'login_user' %}" class="primary-action">Log in</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="participants-wrapper">
+    <p class="section-eyebrow">Room members</p>
+    <h3>Participants</h3>
+    {% if participants %}
+      <ul class="participants-list">
+        {% for user in participants %}
+          <li>@{{ user.username }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state">No participants in this room yet.</p>
+    {% endif %}
+  </aside>
+</div>
+
+<script>
+  const replyParent = document.getElementById('replyParent');
+  const replyingTo = document.getElementById('replyingTo');
+  const cancelReply = document.getElementById('cancelReply');
+
+  document.querySelectorAll('.reply-link').forEach(link => {
+    link.addEventListener('click', () => {
+      replyParent.value = link.dataset.messageId;
+      replyingTo.hidden = false;
+      replyingTo.querySelector('span').textContent = `Replying to ${link.dataset.messageAuthor}`;
+    });
+  });
+
+  cancelReply?.addEventListener('click', () => {
+    replyParent.value = '';
+    replyingTo.hidden = true;
+  });
+</script>
+
+{% endblock content %}

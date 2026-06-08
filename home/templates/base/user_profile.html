@@ -1,0 +1,64 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<section class="page-header profile-header">
+  <div class="profile-identity">
+    <div class="profile-photo">
+      {% if profile.photo %}
+        <img src="{{ profile.photo.url }}" alt="{{ user.username }} profile photo">
+      {% else %}
+        <span>{{ user.username|first|upper }}</span>
+      {% endif %}
+    </div>
+    <div>
+      <p class="section-eyebrow">Profile</p>
+      <h1>{{ user.first_name|default:user.email }}{% if user.last_name %} {{ user.last_name }}{% endif %}</h1>
+      {% if user.email %}
+        <p class="profile-email">
+          {{ user.email }}
+          {% if profile.email_verified %}
+            <span class="status-pill verified">Verified</span>
+          {% else %}
+            <span class="status-pill pending">Unverified</span>
+          {% endif %}
+        </p>
+      {% endif %}
+      {% if profile.bio %}
+        <p class="profile-bio">{{ profile.bio }}</p>
+      {% endif %}
+      <div class="profile-meta-row">
+        {% if profile.location %}<span>{{ profile.location }}</span>{% endif %}
+        {% if profile.website %}<a href="{{ profile.website }}" target="_blank" rel="noopener">Website</a>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% if request.user == user %}
+    <div class="profile-actions">
+      {% if not profile.email_verified %}
+        <a href="{% url 'resend-verification' %}" class="edit-profile-btn">Verify email</a>
+      {% endif %}
+      <a href="{% url 'change-password' %}" class="edit-profile-btn">Change password</a>
+      <a href="{% url 'update-profile' %}" class="edit-profile-btn">Edit profile</a>
+    </div>
+  {% endif %}
+</section>
+
+<div class="profile-container">
+  <aside class="sidebar">
+    {% include 'base/topic_component.html' %}
+  </aside>
+  <section class="main-content">
+    <div class="room-header">
+      <div>
+        <p class="section-eyebrow">Hosted rooms</p>
+        <h3>{{ rooms.count }} room{% if rooms.count != 1 %}s{% endif %}</h3>
+      </div>
+    </div>
+    {% include 'base/feed_component.html' %}
+  </section>
+  <aside class="sidebar">
+    {% include 'base/activity_component.html' %}
+  </aside>
+</div>
+
+{% endblock content %}

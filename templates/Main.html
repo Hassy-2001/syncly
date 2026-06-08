@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" media="screen">
+  <title>{% block title %}Syncly{% endblock %}</title>
+</head>
+<body>
+  <canvas id="syncly-bg" aria-hidden="true"></canvas>
+  {% include "Navbar.html" %}
+
+  {% if messages %}
+    <div class="messages">
+      <ul>
+        {% for message in messages %}
+          <li class="message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p>&copy; 2025 Syncly. All rights reserved.</p>
+      <p>Built for fast, focused conversations.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+  <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

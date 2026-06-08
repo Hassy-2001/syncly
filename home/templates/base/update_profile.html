@@ -1,0 +1,90 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<div class="form-container">
+  <section class="form-card">
+    <div class="form-heading">
+      <div class="form-heading__top">
+        <a href="{% url 'user-profile' user.id %}" class="back-arrow">Back</a>
+        <p class="section-eyebrow">Account</p>
+      </div>
+      <h1 class="form-title">Edit your profile</h1>
+      <p class="form-subtitle">Keep your name, email, photo, and public details up to date.</p>
+    </div>
+
+    <form class="profile-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="profile-photo-editor">
+        <div class="profile-photo preview" id="profilePhotoPreview">
+          {% if profile.photo %}
+            <img src="{{ profile.photo.url }}" alt="{{ user.username }} profile photo">
+          {% else %}
+            <span>{{ user.username|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div class="profile-photo-copy">
+          <label for="{{ profile_form.photo.id_for_label }}">Profile photo</label>
+          <p>Upload a clear square image for your Syncly profile.</p>
+          <div class="file-upload-row">
+            {{ profile_form.photo }}
+            <label class="file-upload-btn" for="{{ profile_form.photo.id_for_label }}">Choose image</label>
+            <span class="file-upload-name" id="profilePhotoName">No image selected</span>
+          </div>
+          {% if profile.photo %}
+            <label class="remove-photo-option">
+              <input type="checkbox" name="remove_photo">
+              Remove current photo
+            </label>
+          {% endif %}
+        </div>
+      </div>
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}
+            <div class="caps-hint reset-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      {% for field in profile_form %}
+        {% if field.name != 'photo' %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}
+              <div class="caps-hint reset-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <div class="button-group">
+        <a href="{% url 'user-profile' user.id %}" class="btn cancel-btn">Cancel</a>
+        <button type="submit" class="btn update-btn">Save changes</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script>
+  const photoInput = document.getElementById('{{ profile_form.photo.id_for_label }}');
+  const photoName = document.getElementById('profilePhotoName');
+  const photoPreview = document.getElementById('profilePhotoPreview');
+
+  if (photoInput && photoName && photoPreview) {
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files && photoInput.files[0];
+      photoName.textContent = file ? file.name : 'No image selected';
+
+      if (!file || !file.type.startsWith('image/')) return;
+
+      const reader = new FileReader();
+      reader.onload = event => {
+        photoPreview.innerHTML = `<img src="${event.target.result}" alt="Selected profile photo preview">`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+</script>
+
+{% endblock content %}

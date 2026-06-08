@@ -1,0 +1,52 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<section class="page-hero">
+  <div>
+    <p class="section-eyebrow">Syncly spaces</p>
+    <h1>Bring your conversations, rooms, and updates into one flow.</h1>
+    <p>Find the right room, follow fresh replies, and keep every discussion easy to join.</p>
+  </div>
+  <div class="hero-actions">
+    <a href="{% url 'create-room' %}" class="primary-action">Start a room</a>
+    <a href="{% url 'topics' %}" class="secondary-action">Browse topics</a>
+  </div>
+</section>
+
+<div class="stat-strip">
+  <div>
+    <strong>{{ room_count }}</strong>
+    <span>available room{% if room_count != 1 %}s{% endif %}</span>
+  </div>
+  <div>
+    <strong>{{ topics.count }}</strong>
+    <span>featured topic{% if topics.count != 1 %}s{% endif %}</span>
+  </div>
+  <div>
+    <strong>{{ room_messages.count }}</strong>
+    <span>recent update{% if room_messages.count != 1 %}s{% endif %}</span>
+  </div>
+</div>
+
+<div class="home-container">
+  <aside class="sidebar">
+    {% include 'base/topic_component.html' %}
+  </aside>
+
+  <section class="main-content">
+    <div class="room-header">
+      <div>
+        <p class="section-eyebrow">Rooms</p>
+        <h3>{{ room_count }} room{% if room_count != 1 %}s{% endif %} available</h3>
+      </div>
+      <a href="{% url 'create-room' %}">Create room</a>
+    </div>
+    {% include 'base/feed_component.html' %}
+  </section>
+
+  <aside class="sidebar">
+    {% include 'base/activity_component.html' %}
+  </aside>
+</div>
+
+{% endblock content %}

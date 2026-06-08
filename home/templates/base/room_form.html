@@ -1,0 +1,25 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<div class="form-container">
+  <section class="form-card">
+    <div class="form-heading">
+      <div class="form-heading__top">
+        <a href="{% url 'home' %}" class="back-arrow">Back</a>
+        <p class="section-eyebrow">Room setup</p>
+      </div>
+      <h1 class="form-title">Create or update a room</h1>
+      <p class="form-subtitle">Give people a clear topic, title, and description.</p>
+    </div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="form-actions">
+        <input type="submit" value="Save room">
+      </div>
+    </form>
+  </section>
+</div>
+
+{% endblock content %}

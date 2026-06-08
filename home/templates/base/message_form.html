@@ -1,0 +1,25 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<div class="form-container">
+  <section class="form-card">
+    <div class="form-heading">
+      <div class="form-heading__top">
+        <a href="{% url 'room' message.room.id %}" class="back-arrow">Back</a>
+        <p class="section-eyebrow">Message</p>
+      </div>
+      <h1 class="form-title">Edit message</h1>
+      <p class="form-subtitle">Update your message or replace its attachment.</p>
+    </div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="form-actions">
+        <input type="submit" value="Save message">
+      </div>
+    </form>
+  </section>
+</div>
+
+{% endblock content %}

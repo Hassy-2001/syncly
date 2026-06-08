@@ -1,0 +1,30 @@
+<section class="activity-panel">
+  <div class="activity-panel__header">
+    <div>
+      <p class="section-eyebrow">Live feed</p>
+      <h3>Recent activity</h3>
+    </div>
+    <a href="{% url 'activity' %}" class="activity-view-all">View all</a>
+  </div>
+
+  {% for message in room_messages %}
+    <article class="activity-item compact">
+      <div class="activity-avatar" aria-hidden="true">{{ message.user.username|first|upper }}</div>
+      <div class="activity-body">
+        <div class="activity-meta">
+          <a href="{% url 'user-profile' message.user.id %}">@{{ message.user }}</a>
+          <span>{{ message.created_at|timesince }} ago</span>
+        </div>
+        <a href="{% url 'room' message.room.id %}" class="activity-room">{{ message.room }}</a>
+        <p>{{ message|truncatechars:120 }}</p>
+      </div>
+      {% if request.user == message.user %}
+        <a href="{% url 'delete-message' message.id %}">Delete
+          
+        </a>
+      {% endif %}
+    </article>
+  {% empty %}
+    <p class="empty-state">No recent activity yet.</p>
+  {% endfor %}
+</section>

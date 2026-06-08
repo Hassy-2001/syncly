@@ -1,0 +1,49 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<section class="notifications-page">
+  <div class="page-header notifications-header">
+    <div>
+      <p class="section-eyebrow">Updates</p>
+      <h1>Notifications</h1>
+      <p>Stay close to replies, mentions, room updates, and reactions.</p>
+    </div>
+    {% if notifications %}
+      <form action="{% url 'notifications-read-all' %}" method="post" class="inline-action-form">
+        {% csrf_token %}
+        <button type="submit" class="secondary-action">Mark all read</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="notification-list">
+    {% for notification in notifications %}
+      <article class="notification-card {% if not notification.is_read %}unread{% endif %}">
+        <div class="notification-status" aria-hidden="true"></div>
+        <div class="notification-content">
+          <div class="notification-main">
+            <h3>{{ notification.text }}</h3>
+            <p>
+              {% if notification.room %}
+                {{ notification.room.name }}
+              {% else %}
+                Syncly update
+              {% endif %}
+              <span>{{ notification.created_at|timesince }} ago</span>
+            </p>
+          </div>
+          <a href="{% url 'notification-read' notification.id %}" class="primary-action">
+            {% if notification.room %}Open{% else %}Read{% endif %}
+          </a>
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty-state empty-card notification-empty">
+        <h3>No notifications yet</h3>
+        <p>When someone replies, mentions you, posts in your room, or likes your message, it will appear here.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock content %}

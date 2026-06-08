@@ -1,0 +1,66 @@
+<div class="room-list">
+  {% for room in rooms %}
+    <article class="room-card">
+      {% if room.cover %}
+        <a href="{% url 'room' room.id %}" class="room-cover">
+          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
+        </a>
+      {% endif %}
+      <div class="room-card__top">
+        <div class="room-card__badges">
+          <span class="room-badge">#{{ room.id }}</span>
+          <span class="room-privacy {% if room.is_private %}private{% else %}public{% endif %}">
+            {% if room.is_private %}Private{% else %}Public{% endif %}
+          </span>
+          {% if room.topic %}
+            <span class="room-topic">{{ room.topic.name }}</span>
+          {% endif %}
+        </div>
+        {% if request.user == room.host %}
+          <div class="room-actions">
+            <a href="{% url 'update-room' room.id %}">Edit</a>
+            <a href="{% url 'delete-room' room.id %}">Delete</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <h4><a href="{% url 'room' room.id %}">{{ room.name }}</a></h4>
+
+      {% if room.description %}
+        <p>{{ room.description|truncatechars:300 }}</p>
+      {% else %}
+        <p>No description yet.</p>
+      {% endif %}
+
+      <div class="room-card__meta">
+        {% if room.host %}
+          <a href="{% url 'user-profile' room.host.id %}">@{{ room.host.username }}</a>
+        {% else %}
+          <span>No host</span>
+        {% endif %}
+        <span>{{ room.updated_at|timesince }} ago</span>
+      </div>
+      {% if request.user.is_authenticated and request.user != room.host %}
+        <div class="room-actions inline">
+          {% if request.user in room.participants.all %}
+            <form action="{% url 'leave-room' room.id %}" method="post" class="inline-action-form">
+              {% csrf_token %}
+              <button type="submit">Leave room</button>
+            </form>
+          {% elif not room.is_private %}
+            <form action="{% url 'join-room' room.id %}" method="post" class="inline-action-form">
+              {% csrf_token %}
+              <button type="submit">Join room</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </article>
+  {% empty %}
+    <div class="empty-state empty-card">
+      <h3>No rooms found</h3>
+      <p>Try a different search or create the first room for this topic.</p>
+      <a href="{% url 'create-room' %}" class="primary-action">Create room</a>
+    </div>
+  {% endfor %}
+</div>

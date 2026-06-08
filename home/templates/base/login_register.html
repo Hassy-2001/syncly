@@ -1,0 +1,106 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<div class="auth-container">
+  <div class="auth-card" id="authCard">
+    {% if page == 'login' %}
+      <div class="auth-heading">
+        <p class="auth-kicker">Welcome back</p>
+        <h2>Log in to Syncly</h2>
+        <p class="auth-support">Use Google for a quick sign in, or continue with your email address.</p>
+      </div>
+      <div class="oauth-panel" aria-label="Social login options">
+        <a class="oauth-btn" href="{% url 'oauth-login' 'google' %}">
+          <span class="oauth-mark">G</span>
+          <span>Continue with Google</span>
+        </a>
+      </div>
+      <div class="auth-divider"><span>or use email</span></div>
+      <form action="" method="post" id="authForm">
+        {% csrf_token %}
+
+        <div class="auth-field">
+          <label>Email address</label>
+          <div class="input-group">
+            <input type="email" name="email" placeholder="Enter your email" autocomplete="email" required autofocus>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label>Password</label>
+            <a href="{% url 'forgot-password' %}">Forgot password?</a>
+          </div>
+          <div class="input-group">
+            <input id="password" type="password" name="password" placeholder="Enter your password" required>
+            <button class="toggle-eye" type="button" data-target="password">Show</button>
+          </div>
+          <div class="caps-hint" id="capsHint">Caps Lock is on</div>
+        </div>
+
+        <input type="submit" value="Log in">
+      </form>
+      <p class="auth-switch">New here? <a href="{% url 'register_user' %}">Create an account</a></p>
+
+    {% else %}
+      <div class="auth-heading">
+        <p class="auth-kicker">Get started</p>
+        <h2>Create your account</h2>
+        <p class="auth-support">Join Syncly with Google, or create your account with your name and email.</p>
+      </div>
+      <div class="oauth-panel" aria-label="Social registration options">
+        <a class="oauth-btn" href="{% url 'oauth-login' 'google' %}">
+          <span class="oauth-mark">G</span>
+          <span>Sign up with Google</span>
+        </a>
+      </div>
+      <div class="auth-divider"><span>or create manually</span></div>
+      <form action="" method="post" id="authForm">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="auth-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="input-group">
+              {{ field }}
+              {% if field.name == 'password1' or field.name == 'password2' %}
+                <button class="toggle-eye" type="button" data-target="{{ field.id_for_label }}">Show</button>
+              {% endif %}
+            </div>
+            {% if field.name == 'password1' or field.name == 'password2' %}
+              <div class="caps-hint" id="capsHint-{{ field.id_for_label }}">Caps Lock is on</div>
+            {% endif %}
+            {% for error in field.errors %}
+              <div class="caps-hint reset-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <button type="submit">Create account</button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="{% url 'login_user' %}">Log in</a></p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.toggle-eye').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.getAttribute('data-target'));
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+    });
+  });
+
+  document.querySelectorAll('input[type="password"]').forEach(input => {
+    const hint = document.getElementById('capsHint-' + input.id) || document.getElementById('capsHint');
+    if (!hint) return;
+    ['keyup', 'keydown'].forEach(evt => {
+      input.addEventListener(evt, e => {
+        hint.style.display = e.getModifierState && e.getModifierState('CapsLock') ? 'block' : 'none';
+      });
+    });
+  });
+</script>
+
+{% endblock content %}

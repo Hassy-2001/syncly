@@ -1,0 +1,35 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<section class="page-header">
+  <p class="section-eyebrow">Browse topics</p>
+  <h1>Choose the conversation you want</h1>
+  <p>Filter rooms by topic or search for a subject you care about.</p>
+</section>
+
+<div class="topics-container">
+  <form action="" method="get" class="topics-search">
+    <a href="{% url 'home' %}" class="back-arrow" aria-label="Go back">Back</a>
+    <input type="text" name="query" placeholder="Search topics" />
+    <button type="submit" aria-label="Search">Search</button>
+  </form>
+
+  <div class="topic-list">
+    <a href="{% url 'topics' %}" class="topic-tag">
+      All <span>{{ topics.count }}</span>
+    </a>
+
+    {% for topic in topics %}
+      <a href="{% url 'home' %}?query={{ topic.name }}" class="topic-tag">
+        {{ topic.name }} <span>{{ topic.room_set.all.count }}</span>
+      </a>
+    {% empty %}
+      <div class="empty-state empty-card">
+        <h3>No topics found</h3>
+        <p>Try another search term.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock content %}

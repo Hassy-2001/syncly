@@ -1,0 +1,61 @@
+{% extends 'Main.html' %}
+{% block content %}
+
+<section class="page-header">
+  <p class="section-eyebrow">Community updates</p>
+  <h1>Activity</h1>
+  <p>See the newest replies across every room.</p>
+</section>
+
+<div class="activity-wrap">
+  {% for message in room_messages %}
+    <article class="activity-item"
+             role="link"
+             tabindex="0"
+             aria-label="Open {{ message.room }} conversation"
+             data-href="{% url 'room' message.room.id %}">
+      <div class="meta">
+        <small>
+          <a href="{% url 'user-profile' message.user.id %}">@{{ message.user }}</a>
+          <span>{{ message.created_at|timesince }} ago</span>
+        </small>
+        <small>replied in {{ message.room }}</small>
+      </div>
+
+      <p>{{ message|truncatechars:300 }}</p>
+
+      {% if request.user == message.user %}
+        <a href="{% url 'delete-message' message.id %}" class="delete-link">Delete</a>
+      {% endif %}
+    </article>
+  {% empty %}
+    <div class="empty-state empty-card">
+      <h3>No recent activity</h3>
+      <p>Messages will appear here once people start replying in rooms.</p>
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+  const cards = document.querySelectorAll('.activity-item[data-href]');
+
+  function openCard(card){
+    const href = card.getAttribute('data-href');
+    if(href){ window.location.href = href; }
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('.delete-link, a')) return;
+      openCard(card);
+    });
+    card.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openCard(card);
+      }
+    });
+  });
+</script>
+
+{% endblock content %}
