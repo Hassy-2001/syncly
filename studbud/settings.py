@@ -18,10 +18,11 @@ from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+IS_VERCEL_ENV = os.environ.get('VERCEL') == '1' or bool(os.environ.get('VERCEL_ENV'))
 
 ENV_FILE = BASE_DIR / '.env'
 if ENV_FILE.exists():
-    local_env_overrides = os.environ.get('DJANGO_ENV', 'development').lower() != 'production'
+    local_env_overrides = os.environ.get('DJANGO_ENV', 'development').lower() != 'production' and not IS_VERCEL_ENV
     for line in ENV_FILE.read_text(encoding='utf-8').splitlines():
         line = line.strip()
         if not line or line.startswith('#') or '=' not in line:
@@ -50,6 +51,9 @@ def env_list(name, default=''):
     ]
 
 
+IS_VERCEL = env_bool('VERCEL', False) or bool(os.environ.get('VERCEL_ENV'))
+
+
 # SECURITY WARNING: keep the secret key used in production secret.
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
@@ -57,16 +61,23 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production.
-DEBUG = env_bool('DEBUG', True)
+DEBUG = env_bool('DEBUG', not IS_VERCEL)
 
 if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
     raise ImproperlyConfigured('Set a strong SECRET_KEY before running with DEBUG=False.')
 
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', '127.0.0.1,localhost,.vercel.app')
-CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
+vercel_host = os.environ.get('VERCEL_URL', '')
+default_allowed_hosts = '127.0.0.1,localhost,.vercel.app'
+if vercel_host:
+    default_allowed_hosts = f'{default_allowed_hosts},{vercel_host}'
 
-if not DEBUG and not os.environ.get('ALLOWED_HOSTS'):
-    raise ImproperlyConfigured('Set ALLOWED_HOSTS before running with DEBUG=False.')
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', default_allowed_hosts)
+
+default_csrf_origins = ''
+if vercel_host:
+    default_csrf_origins = f'https://{vercel_host}'
+
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', default_csrf_origins)
 
 if not DEBUG and not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured('Set CSRF_TRUSTED_ORIGINS before running with DEBUG=False.')
