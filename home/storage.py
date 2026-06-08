@@ -2,8 +2,8 @@ from pathlib import PurePosixPath
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.files.storage import Storage
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.storage import Storage
 
 
 class CloudinaryMediaStorage(Storage):
@@ -23,6 +23,10 @@ class CloudinaryMediaStorage(Storage):
                 api_key=config.get("API_KEY"),
                 api_secret=config.get("API_SECRET"),
                 secure=True,
+            )
+        elif getattr(settings, "MEDIA_UPLOADS_REQUIRE_CLOUDINARY", False):
+            raise ImproperlyConfigured(
+                "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel."
             )
         return cloudinary, cloudinary.uploader, cloudinary.utils
 

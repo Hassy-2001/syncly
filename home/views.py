@@ -89,14 +89,18 @@ def _notification_name(user):
     return user.first_name or user.email or user.username
 
 
-def _add_upload_save_error(form, field_name='cover'):
+def _upload_error_message(exc):
+    reason = str(exc).strip()
+    if not reason:
+        return "We could not upload this file right now. Please check Cloudinary settings or try a smaller file."
+    if len(reason) > 180:
+        reason = f"{reason[:177]}..."
+    return f"Upload failed: {reason}"
+
+
+def _add_upload_save_error(form, exc, field_name='cover'):
     if field_name in form.fields:
-        form.add_error(
-            field_name,
-            ValidationError(
-                "We could not upload this file right now. Please check Cloudinary settings or try a smaller file."
-            ),
-        )
+        form.add_error(field_name, ValidationError(_upload_error_message(exc)))
 
 
 def _notify_message_activity(message):
@@ -473,7 +477,10 @@ def create_room(request):
                 room.participants.add(request.user)
                 return redirect("home")
             except Exception as exc:
-                _add_upload_save_error(form, 'cover')
+                if request.FILES.get('cover'):
+                    _add_upload_save_error(form, exc, 'cover')
+                else:
+                    messages.error(request, f"Room could not be saved: {str(exc)[:180]}")
                 print(f"Room create failed for user {request.user.id}: {exc}")
     context = {'form': form}
     return render(request,"base/room_form.html",context)
@@ -512,8 +519,10 @@ def room(request, pk):
                 _notify_message_activity(message)
                 return redirect("room", pk=room.id)
             except Exception as exc:
-                _add_upload_save_error(form, 'attachment')
-                messages.error(request, "We could not upload that attachment right now.")
+                if request.FILES.get('attachment'):
+                    _add_upload_save_error(form, exc, 'attachment')
+                else:
+                    messages.error(request, f"Message could not be saved: {str(exc)[:180]}")
                 print(f"Message save failed for user {request.user.id}: {exc}")
         messages.error(request, "Please write a message or attach a file.")
 
@@ -543,7 +552,10 @@ def update_room(request, pk):
                 form.save()
                 return redirect("home")
             except Exception as exc:
-                _add_upload_save_error(form, 'cover')
+                if request.FILES.get('cover'):
+                    _add_upload_save_error(form, exc, 'cover')
+                else:
+                    messages.error(request, f"Room could not be saved: {str(exc)[:180]}")
                 print(f"Room update failed for user {request.user.id}: {exc}")
     context = {'form': form}
     return render(request,"base/room_form.html",context)
@@ -598,7 +610,10 @@ def editMessage(request, pk):
                 edited.save()
                 return redirect("room", pk=message.room.id)
             except Exception as exc:
-                _add_upload_save_error(form, 'attachment')
+                if request.FILES.get('attachment'):
+                    _add_upload_save_error(form, exc, 'attachment')
+                else:
+                    messages.error(request, f"Message could not be saved: {str(exc)[:180]}")
                 print(f"Message update failed for user {request.user.id}: {exc}")
         messages.error(request, "Please correct the highlighted fields.")
 
