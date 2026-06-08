@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -23,6 +24,13 @@ ALLOWED_ATTACHMENT_TYPES = {
 def validate_uploaded_file(uploaded_file, allowed_types, max_size, label):
     if not uploaded_file:
         return
+    if (
+        getattr(settings, 'MEDIA_UPLOADS_REQUIRE_CLOUDINARY', False)
+        and not getattr(settings, 'MEDIA_UPLOADS_CONFIGURED', False)
+    ):
+        raise ValidationError(
+            f'{label} uploads are not configured yet. Add Cloudinary environment variables in Vercel and redeploy.'
+        )
     content_type = getattr(uploaded_file, 'content_type', '')
     if content_type not in allowed_types:
         raise ValidationError(f'{label} type is not allowed.')

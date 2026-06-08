@@ -12,4 +12,3 @@ cryptography==48.0.0
 cffi==2.0.0
 requests==2.32.3
 cloudinary==1.44.2
-django-cloudinary-storage==0.3.0

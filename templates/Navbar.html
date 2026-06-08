@@ -50,7 +50,7 @@
         <div class="user-menu" id="userMenu">
           <button class="user-menu-trigger" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="nav-user-avatar" aria-hidden="true">
-              {% if request.user.profile.photo %}
+              {% if request.user.profile.has_display_photo %}
                 <img src="{{ request.user.profile.photo.url }}" alt="">
               {% else %}
                 <span>{{ request.user.username|first|upper }}</span>

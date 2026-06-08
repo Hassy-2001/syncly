@@ -1,7 +1,7 @@
 <div class="room-list">
   {% for room in rooms %}
     <article class="room-card">
-      {% if room.cover %}
+      {% if room.has_display_cover %}
         <a href="{% url 'room' room.id %}" class="room-cover">
           <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
         </a>

@@ -19,7 +19,6 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 IS_VERCEL_ENV = os.environ.get('VERCEL') == '1' or bool(os.environ.get('VERCEL_ENV'))
-HAS_CLOUDINARY_STORAGE = importlib.util.find_spec('cloudinary_storage') is not None
 HAS_CLOUDINARY = importlib.util.find_spec('cloudinary') is not None
 
 ENV_FILE = BASE_DIR / '.env'
@@ -278,13 +277,17 @@ cloudinary_url = os.environ.get('CLOUDINARY_URL', '').strip()
 cloudinary_cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip()
 cloudinary_api_key = os.environ.get('CLOUDINARY_API_KEY', '').strip()
 cloudinary_api_secret = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
+MEDIA_UPLOADS_REQUIRE_CLOUDINARY = IS_VERCEL or not DEBUG
+MEDIA_UPLOADS_CONFIGURED = bool(
+    cloudinary_url or (cloudinary_cloud_name and cloudinary_api_key and cloudinary_api_secret)
+)
 
-if cloudinary_url or (cloudinary_cloud_name and cloudinary_api_key and cloudinary_api_secret):
-    if not HAS_CLOUDINARY_STORAGE:
-        raise ImproperlyConfigured('Cloudinary media storage requires django-cloudinary-storage to be installed.')
+if MEDIA_UPLOADS_CONFIGURED:
+    if not HAS_CLOUDINARY:
+        raise ImproperlyConfigured('Cloudinary media storage requires cloudinary to be installed.')
 
     STORAGES['default'] = {
-        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+        'BACKEND': 'home.storage.CloudinaryMediaStorage',
     }
     DEFAULT_FILE_STORAGE = STORAGES['default']['BACKEND']
 

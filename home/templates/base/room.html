@@ -4,7 +4,7 @@
 <div class="room-container">
   <section class="room-content">
     <div class="page-header compact">
-      {% if room.cover %}
+      {% if room.has_display_cover %}
         <div class="room-detail-cover">
           <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
         </div>
@@ -91,7 +91,7 @@
                 </div>
               {% endif %}
               <p>{{ message.body }}</p>
-              {% if message.attachment %}
+              {% if message.has_display_attachment %}
                 <a href="{{ message.attachment.url }}" class="message-attachment" target="_blank" rel="noopener">
                   View attachment
                 </a>

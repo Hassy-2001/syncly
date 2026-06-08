@@ -16,7 +16,7 @@
       {% csrf_token %}
       <div class="profile-photo-editor">
         <div class="profile-photo preview" id="profilePhotoPreview">
-          {% if profile.photo %}
+          {% if profile.has_display_photo %}
             <img src="{{ profile.photo.url }}" alt="{{ user.username }} profile photo">
           {% else %}
             <span>{{ user.username|first|upper }}</span>

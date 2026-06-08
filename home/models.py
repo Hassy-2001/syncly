@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 import uuid
 
 # Create your models here.
@@ -22,6 +23,10 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username} profile"
 
+    @property
+    def has_display_photo(self):
+        return media_file_is_displayable(self.photo)
+
 class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     topic = models.ForeignKey(Topic,on_delete=models.SET_NULL, null=True)
@@ -40,6 +45,10 @@ class Room(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def has_display_cover(self):
+        return media_file_is_displayable(self.cover)
+
 class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Room,on_delete=models.CASCADE)
@@ -53,6 +62,10 @@ class Message(models.Model):
 
     def __str__(self):
         return self.body[0:30]
+
+    @property
+    def has_display_attachment(self):
+        return media_file_is_displayable(self.attachment)
 
 
 class Notification(models.Model):
@@ -80,3 +93,17 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.text
+
+
+def media_file_is_displayable(file_field):
+    if not file_field:
+        return False
+
+    name = str(file_field.name or '')
+    if not name:
+        return False
+
+    if not getattr(settings, 'MEDIA_UPLOADS_REQUIRE_CLOUDINARY', False):
+        return True
+
+    return name.startswith(('http://', 'https://')) or ':' in name

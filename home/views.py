@@ -89,6 +89,16 @@ def _notification_name(user):
     return user.first_name or user.email or user.username
 
 
+def _add_upload_save_error(form, field_name='cover'):
+    if field_name in form.fields:
+        form.add_error(
+            field_name,
+            ValidationError(
+                "We could not upload this file right now. Please check Cloudinary settings or try a smaller file."
+            ),
+        )
+
+
 def _notify_message_activity(message):
     actor = message.user
     room = message.room
@@ -458,9 +468,13 @@ def create_room(request):
         if form.is_valid():
             room = form.save(commit=False)
             room.host = request.user
-            room.save()
-            room.participants.add(request.user)
-            return redirect("home")
+            try:
+                room.save()
+                room.participants.add(request.user)
+                return redirect("home")
+            except Exception as exc:
+                _add_upload_save_error(form, 'cover')
+                print(f"Room create failed for user {request.user.id}: {exc}")
     context = {'form': form}
     return render(request,"base/room_form.html",context)
 
@@ -492,10 +506,15 @@ def room(request, pk):
                 parent = Message.objects.filter(id=parent_id, room=room).first()
                 if parent:
                     message.parent = parent
-            message.save()
-            room.participants.add(request.user)
-            _notify_message_activity(message)
-            return redirect("room", pk=room.id)
+            try:
+                message.save()
+                room.participants.add(request.user)
+                _notify_message_activity(message)
+                return redirect("room", pk=room.id)
+            except Exception as exc:
+                _add_upload_save_error(form, 'attachment')
+                messages.error(request, "We could not upload that attachment right now.")
+                print(f"Message save failed for user {request.user.id}: {exc}")
         messages.error(request, "Please write a message or attach a file.")
 
     is_participant = request.user.is_authenticated and room.participants.filter(id=request.user.id).exists()
@@ -520,8 +539,12 @@ def update_room(request, pk):
             return render(request,"base/room_form.html", {'form': form}, status=429)
 
         if form.is_valid():
-            form.save()
-            return redirect("home")
+            try:
+                form.save()
+                return redirect("home")
+            except Exception as exc:
+                _add_upload_save_error(form, 'cover')
+                print(f"Room update failed for user {request.user.id}: {exc}")
     context = {'form': form}
     return render(request,"base/room_form.html",context)
 
@@ -571,8 +594,12 @@ def editMessage(request, pk):
         if form.is_valid():
             edited = form.save(commit=False)
             edited.edited_at = timezone.now()
-            edited.save()
-            return redirect("room", pk=message.room.id)
+            try:
+                edited.save()
+                return redirect("room", pk=message.room.id)
+            except Exception as exc:
+                _add_upload_save_error(form, 'attachment')
+                print(f"Message update failed for user {request.user.id}: {exc}")
         messages.error(request, "Please correct the highlighted fields.")
 
     return render(request, "base/message_form.html", {"form": form, "message": message})
