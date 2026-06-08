@@ -103,9 +103,6 @@ INSTALLED_APPS = [
     'home.apps.HomeConfig',
 ]
 
-if HAS_CLOUDINARY_STORAGE:
-    INSTALLED_APPS.insert(0, 'cloudinary_storage')
-
 if HAS_CLOUDINARY:
     INSTALLED_APPS.append('cloudinary')
 
