@@ -19,6 +19,8 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 IS_VERCEL_ENV = os.environ.get('VERCEL') == '1' or bool(os.environ.get('VERCEL_ENV'))
+HAS_CLOUDINARY_STORAGE = importlib.util.find_spec('cloudinary_storage') is not None
+HAS_CLOUDINARY = importlib.util.find_spec('cloudinary') is not None
 
 ENV_FILE = BASE_DIR / '.env'
 if ENV_FILE.exists():
@@ -100,6 +102,12 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.github',
     'home.apps.HomeConfig',
 ]
+
+if HAS_CLOUDINARY_STORAGE:
+    INSTALLED_APPS.insert(0, 'cloudinary_storage')
+
+if HAS_CLOUDINARY:
+    INSTALLED_APPS.append('cloudinary')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -241,15 +249,19 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
 if importlib.util.find_spec('whitenoise'):
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    STORAGES = {
-        'default': {
-            'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        },
-        'staticfiles': {
-            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-        },
+    STORAGES['staticfiles'] = {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     }
     WHITENOISE_AUTOREFRESH = DEBUG
 
@@ -260,6 +272,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+cloudinary_url = os.environ.get('CLOUDINARY_URL', '').strip()
+cloudinary_cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip()
+cloudinary_api_key = os.environ.get('CLOUDINARY_API_KEY', '').strip()
+cloudinary_api_secret = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
+
+if cloudinary_url or (cloudinary_cloud_name and cloudinary_api_key and cloudinary_api_secret):
+    if not HAS_CLOUDINARY_STORAGE:
+        raise ImproperlyConfigured('Cloudinary media storage requires django-cloudinary-storage to be installed.')
+
+    STORAGES['default'] = {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    }
+
+    if cloudinary_cloud_name and cloudinary_api_key and cloudinary_api_secret:
+        CLOUDINARY_STORAGE = {
+            'CLOUD_NAME': cloudinary_cloud_name,
+            'API_KEY': cloudinary_api_key,
+            'API_SECRET': cloudinary_api_secret,
+        }
 
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL and importlib.util.find_spec('django_redis'):
