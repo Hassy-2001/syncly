@@ -265,6 +265,10 @@ if importlib.util.find_spec('whitenoise'):
     }
     WHITENOISE_AUTOREFRESH = DEBUG
 
+# django-cloudinary-storage still checks these legacy settings during collectstatic.
+DEFAULT_FILE_STORAGE = STORAGES['default']['BACKEND']
+STATICFILES_STORAGE = STORAGES['staticfiles']['BACKEND']
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -285,6 +289,7 @@ if cloudinary_url or (cloudinary_cloud_name and cloudinary_api_key and cloudinar
     STORAGES['default'] = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     }
+    DEFAULT_FILE_STORAGE = STORAGES['default']['BACKEND']
 
     if cloudinary_cloud_name and cloudinary_api_key and cloudinary_api_secret:
         CLOUDINARY_STORAGE = {
