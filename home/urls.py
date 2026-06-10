@@ -3,6 +3,8 @@ from .import views
 
 urlpatterns = [
     path("",views.home, name="home"),
+    path("robots.txt", views.robots_txt, name="robots"),
+    path("sitemap.xml", views.sitemap_xml, name="sitemap"),
     path("room/<str:pk>/",views.room, name="room"),
 
 

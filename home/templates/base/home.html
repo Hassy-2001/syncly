@@ -1,4 +1,7 @@
 {% extends 'Main.html' %}
+{% block page_title %}Syncly - Fast community rooms and focused conversations{% endblock %}
+{% block og_title %}Syncly - Fast community rooms and focused conversations{% endblock %}
+{% block meta_description %}Create focused rooms, follow topics, and keep team or community conversations organized with Syncly.{% endblock %}
 {% block content %}
 
 <section class="page-hero">
@@ -19,12 +22,12 @@
     <span>available room{% if room_count != 1 %}s{% endif %}</span>
   </div>
   <div>
-    <strong>{{ topics.count }}</strong>
-    <span>featured topic{% if topics.count != 1 %}s{% endif %}</span>
+    <strong>{{ topic_count }}</strong>
+    <span>featured topic{% if topic_count != 1 %}s{% endif %}</span>
   </div>
   <div>
-    <strong>{{ room_messages.count }}</strong>
-    <span>recent update{% if room_messages.count != 1 %}s{% endif %}</span>
+    <strong>{{ recent_update_count }}</strong>
+    <span>recent update{% if recent_update_count != 1 %}s{% endif %}</span>
   </div>
 </div>
 

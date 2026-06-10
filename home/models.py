@@ -7,6 +7,12 @@ import uuid
 
 class Topic(models.Model):
     name = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+        ]
     
     def __str__(self):
         return self.name
@@ -41,6 +47,11 @@ class Room(models.Model):
 
     class Meta:
         ordering = ['-updated_at','-created_at']
+        indexes = [
+            models.Index(fields=['is_private', '-updated_at']),
+            models.Index(fields=['topic', '-updated_at']),
+            models.Index(fields=['host', '-updated_at']),
+        ]
 
     def __str__(self):
         return self.name
@@ -59,6 +70,13 @@ class Message(models.Model):
     edited_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['room', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
 
     def __str__(self):
         return self.body[0:30]

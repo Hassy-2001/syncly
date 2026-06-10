@@ -102,13 +102,20 @@
   function initSynclyBackground() {
     const canvas = document.getElementById("syncly-bg");
     if (!canvas || !window.THREE) return null;
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const saveData = navigator.connection?.saveData;
+    const smallScreen = window.innerWidth < 900;
+    if (prefersReducedMotion || saveData || smallScreen) {
+      canvas.setAttribute("hidden", "");
+      return null;
+    }
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 0, 8);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "low-power" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     const group = new THREE.Group();
@@ -116,7 +123,7 @@
     const accents = new THREE.Group();
     scene.add(accents);
 
-    const particleCount = 150;
+    const particleCount = 90;
     const positions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i += 1) {
       const i3 = i * 3;
@@ -138,7 +145,7 @@
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     group.add(particles);
 
-    const nodeCount = 24;
+    const nodeCount = 16;
     const nodePositions = [];
     const nodeGeometry = new THREE.BufferGeometry();
     const nodePositionBuffer = new Float32Array(nodeCount * 3);
@@ -195,7 +202,7 @@
     });
 
     const rings = [];
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       const geometry = new THREE.TorusGeometry(1.15 + i * 0.45, 0.012, 10, 96);
       const ring = new THREE.Mesh(geometry, ringMaterial.clone());
       ring.position.set((i - 1.5) * 3.2, i % 2 ? 2.4 : -2.3, -2 - i * 0.6);
@@ -210,7 +217,7 @@
       opacity: 0.1
     });
 
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 5; i += 1) {
       const path = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-7 + Math.random() * 2, -4 + Math.random() * 8, -2 - Math.random() * 2),
         new THREE.Vector3(7 - Math.random() * 2, -4 + Math.random() * 8, -2 - Math.random() * 2)

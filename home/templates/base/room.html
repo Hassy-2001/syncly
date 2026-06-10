@@ -1,4 +1,7 @@
 {% extends 'Main.html' %}
+{% block page_title %}{{ room.name }} - Syncly{% endblock %}
+{% block og_title %}{{ room.name }} - Syncly{% endblock %}
+{% block meta_description %}{{ room.description|default:"Join this Syncly room for focused discussion and updates."|truncatechars:155 }}{% endblock %}
 {% block content %}
 
 <div class="room-container">
@@ -6,7 +9,7 @@
     <div class="page-header compact">
       {% if room.has_display_cover %}
         <div class="room-detail-cover">
-          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
+          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image" loading="eager" decoding="async">
         </div>
       {% endif %}
       <div>

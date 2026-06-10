@@ -5,14 +5,17 @@
   </div>
 
   <div class="topic-link">
-    <h3><a href="{% url 'topics' %}">All topics</a><span>{{ topics.count }}</span></h3>
+    <h3>
+      <a href="{% url 'topics' %}">All topics</a>
+      <span>{% firstof topic_count topics.count %}</span>
+    </h3>
   </div>
 
   {% for topic in topics %}
     <div class="topic-link">
       <h3>
         <a href="{% url 'home' %}?query={{ topic.name }}">{{ topic.name }}</a>
-        <span>{{ topic.room_set.all.count }}</span>
+        <span>{{ topic.room_total|default:0 }}</span>
       </h3>
     </div>
   {% empty %}

@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate,login,logout, update_session_auth_h
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
@@ -54,7 +54,12 @@ def _visible_room_query(user):
 
 
 def _visible_messages(user):
-    return Message.objects.filter(_visible_room_query(user)).distinct()
+    return (
+        Message.objects
+        .filter(_visible_room_query(user))
+        .select_related('user', 'room', 'room__topic')
+        .distinct()
+    )
 
 
 def _rate_limited(request, scope, identifiers=None):
@@ -383,15 +388,22 @@ def changePassword(request):
 def userProfile(request, pk):
     user = get_object_or_404(User, id=pk)
     profile, created = Profile.objects.get_or_create(user=user)
-    rooms = user.room_set.all()
+    rooms = user.room_set.select_related('topic', 'host').prefetch_related('participants')
     if request.user != user:
         if request.user.is_authenticated:
             rooms = rooms.filter(Q(is_private=False) | Q(participants=request.user)).distinct()
         else:
             rooms = rooms.filter(is_private=False)
-    room_messages = _visible_messages(request.user).filter(user=user)
-    topics = Topic.objects.all()
-    context = {"user": user, "profile": profile, "rooms": rooms, "room_messages": room_messages, "topics": topics}
+    room_messages = _visible_messages(request.user).filter(user=user)[:50]
+    topics = Topic.objects.annotate(room_total=Count('room')).order_by('name')[:7]
+    context = {
+        "user": user,
+        "profile": profile,
+        "rooms": rooms[:30],
+        "room_messages": room_messages,
+        "topics": topics,
+        "topic_count": Topic.objects.count(),
+    }
     return render(request,'base/user_profile.html',context)
 
 @login_required(login_url="/login_user/")
@@ -427,34 +439,81 @@ def update_profile(request):
     return render(request,'base/update_profile.html', context)
 
 def home(request):
-    query = request.GET.get("query") if request.GET.get("query") != None else ''
-    rooms = Room.objects.filter(
-        Q(topic__name__icontains=query) |
-        Q(description__icontains=query) |
-        Q(name__icontains=query)
+    query = (request.GET.get("query") or '').strip()[:120]
+    rooms = (
+        Room.objects
+        .select_related('host', 'topic')
+        .prefetch_related('participants')
+        .filter(
+            Q(topic__name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(name__icontains=query)
         )
+    )
     if request.user.is_authenticated:
         rooms = rooms.filter(Q(is_private=False) | Q(host=request.user) | Q(participants=request.user)).distinct()
     else:
         rooms = rooms.filter(is_private=False)
     room_count = rooms.count()
-    topics = Topic.objects.all()[0:7]
+    rooms = rooms[:30]
+    topic_count = Topic.objects.count()
+    topics = Topic.objects.annotate(room_total=Count('room')).order_by('name')[:7]
 
-    room_messages = _visible_messages(request.user).filter(Q(room__topic__name__icontains=query))
-    context = {"rooms": rooms, 'topics': topics, 'room_count': room_count,"room_messages":room_messages}
+    recent_messages = _visible_messages(request.user).filter(Q(room__topic__name__icontains=query))
+    recent_update_count = recent_messages.count()
+    room_messages = recent_messages[:12]
+    context = {
+        "rooms": rooms,
+        'topics': topics,
+        'topic_count': topic_count,
+        'room_count': room_count,
+        "room_messages": room_messages,
+        "recent_update_count": recent_update_count,
+    }
     return render(request,"base/home.html",context)
 
 
 def topics(request):
-    query = request.GET.get("query") if request.GET.get("query") != None else ''
-    topics = Topic.objects.filter(name__icontains=query)
-    context = {"topics": topics}
+    query = (request.GET.get("query") or '').strip()[:120]
+    topics = Topic.objects.filter(name__icontains=query).annotate(room_total=Count('room')).order_by('name')
+    context = {"topics": topics, "topic_count": topics.count()}
     return render(request,"base/topics.html", context)
 
 def activity(request):
-    room_messages = _visible_messages(request.user)
+    room_messages = _visible_messages(request.user)[:80]
     context = {"room_messages": room_messages}
     return render(request,"base/activity.html", context)
+
+
+def robots_txt(request):
+    sitemap_url = request.build_absolute_uri(reverse('sitemap'))
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /accounts/",
+        "Disallow: /update_profile/",
+        f"Sitemap: {sitemap_url}",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def sitemap_xml(request):
+    urls = [
+        request.build_absolute_uri(reverse('home')),
+        request.build_absolute_uri(reverse('topics')),
+        request.build_absolute_uri(reverse('activity')),
+    ]
+    public_rooms = Room.objects.filter(is_private=False).order_by('-updated_at').only('id', 'updated_at')[:100]
+    for public_room in public_rooms:
+        urls.append(request.build_absolute_uri(reverse('room', kwargs={'pk': public_room.id})))
+
+    body = "\n".join(
+        f"  <url><loc>{url}</loc></url>"
+        for url in urls
+    )
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{body}\n</urlset>'
+    return HttpResponse(xml, content_type="application/xml")
 
 # CRUD Functionality for USER POST 
 
@@ -486,13 +545,21 @@ def create_room(request):
     return render(request,"base/room_form.html",context)
 
 def room(request, pk):
-    room = get_object_or_404(Room, id=pk)
+    room = get_object_or_404(
+        Room.objects.select_related('host', 'topic').prefetch_related('participants'),
+        id=pk,
+    )
     if not _can_access_room(request.user, room):
         messages.warning(request, "This is a private room. Use an invite link to join.")
         return redirect("home")
 
     participants = room.participants.all()
-    room_messages = room.message_set.all().order_by("-created_at")
+    room_messages = (
+        room.message_set
+        .select_related('user', 'parent', 'parent__user')
+        .prefetch_related('reactions')
+        .order_by("-created_at")[:100]
+    )
 
     if request.method == "POST":
         if not request.user.is_authenticated:

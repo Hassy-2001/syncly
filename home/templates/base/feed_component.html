@@ -3,7 +3,7 @@
     <article class="room-card">
       {% if room.has_display_cover %}
         <a href="{% url 'room' room.id %}" class="room-cover">
-          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image">
+          <img src="{{ room.cover.url }}" alt="{{ room.name }} cover image" loading="lazy" decoding="async">
         </a>
       {% endif %}
       <div class="room-card__top">

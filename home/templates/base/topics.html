@@ -1,4 +1,7 @@
 {% extends 'Main.html' %}
+{% block page_title %}Topics - Syncly{% endblock %}
+{% block og_title %}Topics - Syncly{% endblock %}
+{% block meta_description %}Browse Syncly topics and find rooms for focused conversations, learning, and updates.{% endblock %}
 {% block content %}
 
 <section class="page-header">
@@ -16,12 +19,12 @@
 
   <div class="topic-list">
     <a href="{% url 'topics' %}" class="topic-tag">
-      All <span>{{ topics.count }}</span>
+      All <span>{{ topic_count }}</span>
     </a>
 
     {% for topic in topics %}
       <a href="{% url 'home' %}?query={{ topic.name }}" class="topic-tag">
-        {{ topic.name }} <span>{{ topic.room_set.all.count }}</span>
+        {{ topic.name }} <span>{{ topic.room_total|default:0 }}</span>
       </a>
     {% empty %}
       <div class="empty-state empty-card">

@@ -4,10 +4,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{% block meta_description %}Syncly is a fast community conversation platform for rooms, topics, updates, and focused collaboration.{% endblock %}">
+  <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+  <meta name="theme-color" content="#0f0f0b">
+  <meta property="og:site_name" content="Syncly">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}Syncly{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Create focused rooms, browse topics, and keep conversations organized with Syncly.{% endblock %}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/syncly-logo.png' %}">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="icon" type="image/png" href="{% static 'img/syncly-logo.png' %}">
   <link rel="apple-touch-icon" href="{% static 'img/syncly-logo.png' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" media="screen">
-  <title>{% block title %}Syncly{% endblock %}</title>
+  <title>{% block page_title %}Syncly{% endblock %}</title>
 </head>
 <body>
   <canvas id="syncly-bg" aria-hidden="true"></canvas>
@@ -34,8 +45,8 @@
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
-  <script src="{% static 'js/script.js' %}"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+  <script defer src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

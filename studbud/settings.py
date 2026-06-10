@@ -260,6 +260,7 @@ if importlib.util.find_spec('whitenoise'):
         'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     }
     WHITENOISE_AUTOREFRESH = DEBUG
+    WHITENOISE_MAX_AGE = 60 if DEBUG else 31536000
 
 # django-cloudinary-storage still checks these legacy settings during collectstatic.
 DEFAULT_FILE_STORAGE = STORAGES['default']['BACKEND']
